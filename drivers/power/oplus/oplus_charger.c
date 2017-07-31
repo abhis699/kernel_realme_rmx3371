@@ -86,6 +86,13 @@
 
 static struct oplus_chg_chip *g_charger_chip = NULL;
 
+#ifdef CONFIG_FORCE_FAST_CHARGE
+#include <linux/moduleparam.h>
+#include <linux/fastchg.h>
+static int ffc_val = 900;
+module_param(ffc_val, int, 0644);
+#endif
+
 #define FLASH_SCREEN_CTRL_OTA		0X01
 #define FLASH_SCREEN_CTRL_DTSI	0X02
 
@@ -4226,8 +4233,19 @@ void oplus_chg_set_input_current_limit(struct oplus_chg_chip *chip)
 			break;
 		default:
 			return;
-	}
+}
 
+#ifdef CONFIG_FORCE_FAST_CHARGE
+			if (force_fast_charge > 0)
+			{
+				current_limit = ffc_val;
+			}
+			else
+			{
+				current_limit = chip->limits.input_current_usb_ma;
+			}
+#else
+#endif
 	if ((chip->chg_ctrl_by_lcd) && (chip->led_on)) {
 		if (!chip->dual_charger_support || (chip->dual_charger_support && chip->charger_volt > 7500)) {
 			if (chip->led_temp_status == LED_TEMP_STATUS__HIGH) {
